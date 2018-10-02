@@ -3,3 +3,14 @@
 
 # Minimum point (d,E) for HeH+
 0.92876254180602	-2.8544184662174645
+
+
+# ---
+
+
+# Ionization potential (according to Koopman's theorem)
+#  - For H
+E (HOMO) = -0.590501 
+
+# - For HeH+
+E (HOMO) = -1.270649 
