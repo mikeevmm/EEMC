@@ -8,12 +8,4 @@ molecule H {
 }
 H.D = D
 
-molecule Hion {
-	-1 2
-	H
-	H 1 D
-}
-Hion.D = D
-
 energy('scf', molecule=H)
-energy('scf', molecule=Hion)

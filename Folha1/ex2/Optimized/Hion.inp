@@ -1,0 +1,13 @@
+D = 0.7116232464929859
+
+molecule Hion {
+	1 2
+	H
+	H 1 D
+}
+Hion.D = D
+
+set basis sto-3g
+set reference uhf
+
+energy('scf', molecule=Hion)
