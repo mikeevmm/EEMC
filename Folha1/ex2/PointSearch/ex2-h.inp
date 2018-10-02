@@ -1,0 +1,18 @@
+import numpy as np
+
+dmin = 0.1
+dmax = 1.5
+pt_density = 500
+
+molecule H {
+	H
+	H 1 d
+}
+
+set basis sto-3g
+
+print('\# Distance (Angstrom)	Energy (Hartree)')
+for r in np.linspace(dmin, dmax, pt_density):
+	H.d = r
+	E = energy('hf', molecule=H)
+	print('{}	{}'.format(r, E))

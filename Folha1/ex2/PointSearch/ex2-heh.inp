@@ -1,0 +1,19 @@
+import numpy as np
+
+rmin = 0.1
+rmax = 1.5 
+pt_density = 300
+
+molecule HeH {
+	1 1
+	he
+	h 1 d
+}
+
+set basis sto-3g
+
+print('\# d (Angstrom)	E (Hartree)')
+for r in np.linspace(rmin, rmax, pt_density):
+	HeH.d = r
+	E = energy('hf', molecule=HeH)
+	print('{}	{}'.format(r, E))

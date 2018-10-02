@@ -1,0 +1,19 @@
+D = 0.7116232464929859
+
+set basis sto-3g
+
+molecule H {
+	H
+	H 1 D
+}
+H.D = D
+
+molecule Hion {
+	-1 2
+	H
+	H 1 D
+}
+Hion.D = D
+
+energy('scf', molecule=H)
+energy('scf', molecule=Hion)
