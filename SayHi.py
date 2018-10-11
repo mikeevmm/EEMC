@@ -151,6 +151,7 @@ class Channel(object):
 		elif id == self.TEXTMSG:
 			is_public_msg = payload[0]
 			msg_content = payload[1:]
+			print(msg_content)
 
 	def _send_probeout_(self, to_addr, to_port, broadcast=False):
 		probeout_id = self._get_identifier_bytes_(self.PROBEOUT)
@@ -171,6 +172,10 @@ class Channel(object):
 		self._send_(msg, '<broadcast>', port)
 
 	def _send_(self, msg, addr, addr_port):
+		if type(addr) in (bytes, bytearray):
+			addr = '.'.join(str(x) for x in addr)
+		if type(addr_port) in (bytes, bytearray):
+			addr_port = int.from_bytes(addr_port, byteorder='big', signed=False)
 		self.channel_lock.acquire()
 		self.channel.sendto(msg, (addr, addr_port))
 		self.channel_lock.release()
@@ -207,7 +212,7 @@ with Channel(1337, name) as channel:
 		msg = input(">").strip()
 		sendto = tuple(map(lambda x: x.group(1), mention_reg.finditer(msg)))
 		if len(sendto) == 0:
-			channel.broadcast_text(msg)
+			channel.broadcast_text('%s (Public)> %s' % (name, msg))
 		else:
 			for dest in sendto:
-				channel.send_text_to_human(msg, dest)
+				channel.send_text_to_human('%s (Private)> %s' % (name, msg), dest)
