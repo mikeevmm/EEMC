@@ -153,7 +153,7 @@ class Channel(object):
 				# If was broadcasting, add ourselves to some lists
 				if was_broadcast:
 					probein_id = self._get_identifier_bytes_(self.PROBEIN)
-					self._send_(probein_id + b'\x01' + self.addr + self.port, contact_addr, contact_port)
+					self._send_(probein_id + b'\x01' + bytes(self.addr) + bytes(self.port), contact_addr, contact_port)
 
 		elif id == self.TEXTMSG:
 			if addr in (self.addr_human, self.addr):
