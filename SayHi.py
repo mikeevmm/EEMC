@@ -17,7 +17,8 @@ class Channel(object):
 		Broadcast message to determine IP in subnet
 
 	PROBEOUT:
-		[2 bytes; payload ID] [1 byte; broadcast mode --- should include self in PROBEIN] [2 bytes (unsigned); port listening for PROBEIN]
+		[2 bytes; payload ID] [1 byte; broadcast mode --- should include self in PROBEIN]
+			[2 bytes (unsigned); port listening for PROBEIN]
 		Request for the contact list of the peer
 	
 	PROBEIN:
@@ -56,7 +57,7 @@ class Channel(object):
 
 		while self.addr is None:
 			id = self._get_identifier_bytes_(self.WHOAMI) 	# 2 bytes
-			random_key = self.addr_secret		# 4 bytes
+			random_key = self.addr_secret					# 4 bytes
 			byte_digest = id + random_key
 			self._broadcast_(byte_digest)
 			time.sleep(1)
@@ -116,7 +117,7 @@ class Channel(object):
 				return_list.add((self.addr, self.port, self.human_name))
 			if addr in return_list:
 				return_list.remove(addr)
-			
+
 			requesting_port = int.from_bytes(payload[1:3], byteorder='big', signed=False)
 			contacts_len_digest = int(len(return_list)).to_bytes(1, byteorder='big', signed=False)
 			contacts_digest = bytearray(*((x[0] + int(x[1]).to_bytes(2, byteorder='big', signed=False) + bytes(self.human_name, 'utf-8')) for x in return_list))
@@ -128,6 +129,7 @@ class Channel(object):
 
 		elif id == self.PROBEIN: # Response to contacts request
 			print("Recieved PROBEIN")
+			was_broadcast = (len(self.contact_list) == 0)
 			contact_count = payload[0]
 
 			contacts = set()
@@ -136,7 +138,7 @@ class Channel(object):
 				contact_port = int.from_bytes(payload[i+4:i+6], byteorder='big', signed=False)
 				contact_name = bytes(payload[i+6:i+22]).decode('utf-8')
 				contacts.add((contact_ip, contact_port, contact_name))
-				
+			
 			new_contacts = contacts - self.contact_list
 			self.contact_list = self.contact_list.union(new_contacts)
 
@@ -148,8 +150,14 @@ class Channel(object):
 				self.human_to_contact[contact_name] = (contact_addr, contact_port)
 				# Send PROBEOUT to new contacts
 				self._send_probeout_(contact_addr, contact_port)
+				# If was broadcasting, add ourselves to some lists
+				if was_broadcast:
+					probein_id = self._get_identifier_bytes_(self.PROBEIN)
+					self._send_(probein_id + b'\x01' + self.addr + self.port, contact_addr, contact_port)
 
 		elif id == self.TEXTMSG:
+			if addr in (self.addr_human, self.addr):
+				return
 			is_public_msg = payload[0]
 			msg_content = payload[1:].decode('utf-8')
 			print(msg_content)
