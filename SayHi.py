@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import socket
 import threading
 import time
@@ -23,8 +21,12 @@ class Channel(object):
 		Request for the contact list of the peer
 	
 	PROBEIN:
-		[2 bytes; payload ID] [1 bytes (unsigned); uint count of incoming peer address count ] [remainder; (ip address, port, human_name) in groups of 4+2+8 bytes]
+		[2 bytes; payload ID] [1 bytes (unsigned); uint count of incoming peer address count ]
+			[remainder; (ip address, port, human_name) in groups of 4+2+16 bytes]
 		Response to PROBEOUT request from a queried peer
+	
+	TEXTMSG:
+		[2 bytes; payload ID] [1 bytes (unsigned); private or public (broadcast) message] [remainder; text message]
 	"""
 
 	def __init__(self, in_port, human_name):
@@ -44,6 +46,7 @@ class Channel(object):
 		self.addr_human = None
 
 		self.contact_list = set()
+		self.human_to_contact = dict()
 
 	def __enter__(self):
 		self.alive = True
@@ -52,10 +55,10 @@ class Channel(object):
 		self.listen_thread.start()
 
 		while self.addr is None:
-			id = self.identifier(self.WHOAMI) 	# 2 bytes
+			id = self._get_identifier_bytes_(self.WHOAMI) 	# 2 bytes
 			random_key = self.addr_secret		# 4 bytes
 			byte_digest = id + random_key
-			self.broadcast(byte_digest)
+			self._broadcast_(byte_digest)
 			time.sleep(1)
 
 		self.probe_thread = threading.Thread(target=self._thread_probe_)
@@ -116,12 +119,12 @@ class Channel(object):
 			
 			requesting_port = int.from_bytes(payload[1:3], byteorder='big', signed=False)
 			contacts_len_digest = int(len(return_list)).to_bytes(1, byteorder='big', signed=False)
-			contacts_digest = bytearray(*((x[0] + int(x[1]).to_bytes(2, byteorder='big', signed=False) + bytes(self.human_name, 'ascii')) for x in return_list))
-			response_id = self.identifier(self.PROBEIN)
+			contacts_digest = bytearray(*((x[0] + int(x[1]).to_bytes(2, byteorder='big', signed=False) + bytes(self.human_name, 'utf-8')) for x in return_list))
+			response_id = self._get_identifier_bytes_(self.PROBEIN)
 			
 			print("Got PROBEOUT request from {}, sending PROBEIN back".format(addr))
 			full_response = response_id + contacts_len_digest + contacts_digest
-			self.send(full_response, addr, requesting_port) # Send PROBEIN back
+			self._send_(full_response, addr, requesting_port) # Send PROBEIN back
 
 		elif id == self.PROBEIN: # Response to contacts request
 			print("Recieved PROBEIN")
@@ -131,42 +134,80 @@ class Channel(object):
 			for i in range(1, len(payload[1:]), 4+2+8):
 				contact_ip = bytes(payload[i:i+4])
 				contact_port = int.from_bytes(payload[i+4:i+6], byteorder='big', signed=False)
-				contact_name = bytes(payload[i+6:i+14]).decode('ascii')
+				contact_name = bytes(payload[i+6:i+22]).decode('utf-8')
+				contacts.add((contact_ip, contact_port, contact_name))
 
 			new_contacts = contacts - self.contact_list
 			self.contact_list.union(new_contacts)
 
 			print("Got PROBEIN response with {} new elements.".format(contact_count))
-			for contact in new_contacts: # Send PROBEOUT to new contacts
-				contact_addr, contact_port = contact
+			for contact in new_contacts:
+				contact_addr, contact_port, contact_name = contact
+				# Save human reference
+				self.human_to_contact[contact_name] = (contact_addr, contact_port)
+				# Send PROBEOUT to new contacts
 				self._send_probeout_(contact_addr, contact_port)
 
+		elif id == self.TEXTMSG:
+			is_public_msg = payload[0]
+			msg_content = payload[1:]
+
 	def _send_probeout_(self, to_addr, to_port, broadcast=False):
-		probeout_id = self.identifier(self.PROBEOUT)
+		probeout_id = self._get_identifier_bytes_(self.PROBEOUT)
 		broadcast_mode = b'\x01' if broadcast else b'\x00'
 		listening_on = self.port.to_bytes(2, byteorder='big', signed=False)
 		msg_digest = probeout_id + broadcast_mode + listening_on
 		if broadcast:
-			self.broadcast(msg_digest, to_port)
+			self._broadcast_(msg_digest, to_port)
 		else:
-			self.send(msg_digest, to_addr, to_port)
+			self._send_(msg_digest, to_addr, to_port)
 	
-	def identifier(self, id_int):
+	def _get_identifier_bytes_(self, id_int):
 		return id_int.to_bytes(2, byteorder='big', signed = False)
 
-	def broadcast(self, msg, port = None):
+	def _broadcast_(self, msg, port = None):
 		if port is None:
 			port = self.port
-		self.send(msg, '<broadcast>', port)
+		self._send_(msg, '<broadcast>', port)
 
-	def send(self, msg, addr, addr_port):
+	def _send_(self, msg, addr, addr_port):
 		self.channel_lock.acquire()
 		self.channel.sendto(msg, (addr, addr_port))
 		self.channel_lock.release()
+	
+	def broadcast_text(self, msg):
+		if len(msg) == 0:
+			return
+		textmsg_id = self._get_identifier_bytes_(self.TEXTMSG)
+		is_broadcast = b'\x01'
+		text_bytes = str(msg).encode('utf-8')
+		self._broadcast_(textmsg_id + is_broadcast + text_bytes)
 
-mention_reg
+	def send_text_to_human(self, msg, human):
+		if len(msg) == 0:
+			return
+		if human not in self.human_to_contact:
+			print("Unknown %s" % human)
+			return
+		addr, port = self.human_to_contact[human]
+		textmsg_id = self._get_identifier_bytes_(self.TEXTMSG)
+		is_broadcast = b'\x00'
+		text_bytes = str(msg).encode('utf-8')
+		self._send_(text_bytes, addr, port)
+
+mention_reg = re.compile(r"[^\\]?@([\w_-]+)")
 
 name = input("NAME>").strip().lower()
+while mention_reg.match('@' + name) is None:
+	print('Invalid username, use letters, numbers, - and _.')
+	name = input("NAME>").strip().lower()
+
 with Channel(1337, name) as channel:
 	while True:
 		msg = input(">").strip()
+		sendto = tuple(map(lambda x: x.group(1), mention_reg.finditer(msg)))
+		if len(sendto) == 0:
+			channel.broadcast_text(msg)
+		else:
+			for dest in sendto:
+				channel.send_text_to_human(msg, dest)
