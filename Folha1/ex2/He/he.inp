@@ -1,0 +1,7 @@
+molecule He {
+	He
+}
+
+set basis sto-3g
+
+energy('hf')
