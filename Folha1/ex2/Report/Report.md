@@ -232,18 +232,22 @@ energia de ionização prevista por aplicação direta de UHF/STO-3G ($I_d$), as
 com energias de ionização experimentalmente previstas (NIST, 2018) ($I_e$).
 
 |            	| $H_2$     	| $HeH^+$   	| $H_2^+$ 	| $HeH^{2+}$ 	|
-|------------	|-----------	|-----------	|---------	|------------	|
-| E          	| -1.117553 	| -2.854418 	| -0.527029 | -1.356665     |
+|------------	|-----------	|---------------|---------------|------------	|
+| E          	| -1.117553 	| -2.854418 	| -0.527029	| -1.356665     |
 | $\epsilon$ 	| -0.590501    	| -1.270649 	| ---     	| ---        	|
 | $I_p$      	|  0.590501   	|  1.270649  	| ---     	| ---        	|
 | $I_d$      	|  0.590524  	|  1.497753  	| ---     	| ---        	|
-| $I_e$         |  0.566895     | Sem Dados     | ---       | ---           |
+| $I_e$         |  0.566895     |  0.432356[^1]	| ---       	| ---           |
 
 Table:  Comparação das energias HOMO ($\epsilon$), total (E), e energias
         de ionização pelo teorema de Koopmans ($I_p$) e por cálculo da energia
         da espécie ionizada ($I_d$). Todos os valores estão expressos em Hartree.
         Os valores $E$ e $\epsilon$ foram obtidos por cálculo com UHF/STO-3G.
         \label{tab:ionenergies}
+
+[^1]: O sistema HeH<sup>+</sup> é demasiado instável para ser determinada a energia de ionização
+	experimentalmente. Como tal, tomou-se como valor de comparação o resultado obtido
+	pelo método MP3=FULL/6-31+G** (perturbações de 2ª ordem)
 
 \pagebreak
 
@@ -283,7 +287,10 @@ experimentalmente verificada.
 
 Para $\text{HeH}^+$ a carga nuclear é mais elevada, pelo que a energia de relaxação
 deve ser mais elevada. Observa-se, de facto, que nesse caso $I_p$ e $I_d$ já são
-discordantes na primeira casa decimal.
+discordantes na primeira casa decimal. Por outro lado, verifica-se que o Método
+de Hartree-Fock não é adequado para o cálculo das energias de $\text{HeH}^+$;
+ambas as bases produzem resultados com 1 Hartree de diferença do resultado de
+referência.
 
 # Energia de Dissociação
 
