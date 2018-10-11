@@ -136,21 +136,22 @@ class Channel(object):
 				contact_port = int.from_bytes(payload[i+4:i+6], byteorder='big', signed=False)
 				contact_name = bytes(payload[i+6:i+22]).decode('utf-8')
 				contacts.add((contact_ip, contact_port, contact_name))
-
+				
 			new_contacts = contacts - self.contact_list
-			self.contact_list.union(new_contacts)
+			self.contact_list = self.contact_list.union(new_contacts)
 
 			print("Got PROBEIN response with {} new elements.".format(contact_count))
 			for contact in new_contacts:
 				contact_addr, contact_port, contact_name = contact
 				# Save human reference
+				print("Got new contact: (%s, %s, %s)" % (contact_addr, contact_port, contact_name))
 				self.human_to_contact[contact_name] = (contact_addr, contact_port)
 				# Send PROBEOUT to new contacts
 				self._send_probeout_(contact_addr, contact_port)
 
 		elif id == self.TEXTMSG:
 			is_public_msg = payload[0]
-			msg_content = payload[1:]
+			msg_content = payload[1:].decode('utf-8')
 			print(msg_content)
 
 	def _send_probeout_(self, to_addr, to_port, broadcast=False):
