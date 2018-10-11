@@ -77,6 +77,7 @@ class Channel(object):
 	def _thread_probe_(self):
 		while(self.alive):
 			if len(self.contact_list) == 0:
+				print("No contacts, bootstrapping through <broadcast>")
 				self.channel_lock.acquire()
 				self._send_probeout_('<broadcast>', self.port, True)
 				self.channel_lock.release()
@@ -108,6 +109,7 @@ class Channel(object):
 			contacts_digest = bytearray(return_list)
 			response_id = self.identifier(self.PROBEIN)
 			
+			print("Got PROBEOUT request from {}, sending PROBEIN back".format(addr))
 			full_response = response_id + contacts_len_digest + contacts_digest
 			self.send(full_response, addr, requesting_port) # Send PROBEIN back
 
@@ -116,6 +118,8 @@ class Channel(object):
 			contacts = set((payload[i:i+4], payload[i+4:i+6]) for i in range(1, len(payload[1:]), 6))
 			new_contacts = contacts - self.contact_list
 			self.contact_list.add(new_contacts)
+
+			print("Got PROBEIN response with {} new elements.".format(contact_count))
 			for contact in new_contacts: # Send PROBEOUT to new contacts
 				contact_addr, contact_port = contact
 				self._send_probeout_(contact_addr, contact_port)
