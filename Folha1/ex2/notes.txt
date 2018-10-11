@@ -14,3 +14,11 @@ E (HOMO) = -0.590501
 
 # - For HeH+
 E (HOMO) = -1.270649 
+
+
+# Total energy for ions
+# - H+
+0
+
+# - HeH ++
+-1.3566654877599005
