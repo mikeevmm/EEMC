@@ -119,7 +119,7 @@ Nestes estão indicadas as energias HOMO para cada espécie, nomeadamente:
 
 $$ \epsilon^{\text{H}_2}_{\text{HOMO}} 	 = -0.590501 \quad \text{(Hartree)} $$
 
-$$ \epsilon^{\text{HeH}^+}_{\text{HOMO}} = -1.270649 \quad \text{(Hartree)} $$
+$$ \epsilon^{\text{HeH}^+}_{\text{HOMO}} = -1.524298 \quad \text{(Hartree)} $$
 
 Assim como a energia total de cada espécie:
 
@@ -234,8 +234,8 @@ com energias de ionização experimentalmente previstas (NIST, 2018) ($I_e$).
 |            	| $H_2$     	| $HeH^+$   	| $H_2^+$ 	| $HeH^{2+}$ 	|
 |------------	|-----------	|---------------|---------------|------------	|
 | E          	| -1.117553 	| -2.854418 	| -0.527029	| -1.356665     |
-| $\epsilon$ 	| -0.590501    	| -1.270649 	| ---     	| ---        	|
-| $I_p$      	|  0.590501   	|  1.270649  	| ---     	| ---        	|
+| $\epsilon$ 	| -0.590501    	| -1.524298 	| ---     	| ---        	|
+| $I_p$      	|  0.590501   	|  1.524298  	| ---     	| ---        	|
 | $I_d$      	|  0.590524  	|  1.497753  	| ---     	| ---        	|
 | $I_e$         |  0.566895     |  0.432356[^1]	| ---       	| ---           |
 
